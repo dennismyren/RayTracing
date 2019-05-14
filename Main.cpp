@@ -79,11 +79,11 @@ public:
 				hitRec.anyHit = false;
 				searchClosestHit(ray, hitRec);
 				if (hitRec.anyHit) {
-					Vec3f vec = Vec3f(1.0f, 0.0f, 0.0f);
+					Vec3f vec = Vec3f(1.0f, 1.0f, 1.0f);
 					image->setPixel(x, y, vec);
 					glSetPixel(x, y, vec);
 				} else {
-					Vec3f vec = Vec3f(0.0f, 0.0f, 1.0f);
+					Vec3f vec = Vec3f(0.0f, 0.0f, 0.0f);
 					image->setPixel(x, y, vec);
 					glSetPixel(x, y, vec);
 				}
@@ -124,7 +124,7 @@ void init(void)
 	glutReshapeFunc(changeSize);
 	//glutKeyboardFunc(keypress);
 
-	glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
 	Scene * scene = new Scene;
 	scene->add(Sphere(Vec3f(0.0f, 0.0f, -10.0f), 3.0f));
