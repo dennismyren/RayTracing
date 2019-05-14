@@ -2,7 +2,7 @@
 #include<iostream>
 using namespace std;
 
-#include "Common/freeglut/include/GL/glut.h"
+#include "glut.h"
 
 #include "Vec3.h"
 #include "Image.h"
@@ -80,11 +80,13 @@ public:
 				hitRec.anyHit = false;
 				searchClosestHit(ray, hitRec);
 				if (hitRec.anyHit) {
-					image->setPixel(x, y, Vec3f(1.0f, 0.0f, 0.0f));
-					glSetPixel(x, y, Vec3f(1.0f, 0.0f, 0.0f));
+					Vec3f vec = Vec3f(1.0f, 0.0f, 0.0f);
+					image->setPixel(x, y, vec);
+					glSetPixel(x, y, vec);
 				} else {
-					image->setPixel(x, y, Vec3f(0.0f, 0.0f, 1.0f));
-					glSetPixel(x, y, Vec3f(0.0f, 0.0f, 1.0f));
+					Vec3f vec = Vec3f(0.0f, 0.0f, 1.0f);
+					image->setPixel(x, y, vec);
+					glSetPixel(x, y, vec);
 				}
 			}
 		}
