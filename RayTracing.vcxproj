@@ -94,7 +94,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\denni\Source\Repos\RayTracing\Common\freeglut\include\GL;C:\Users\denni\Source\Repos\RayTracing\Common\glew\include\GL;C:\Users\denni\Source\Repos\RayTracing\Common\glew\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\Common\glew\include\GL;..\..\Common\freeglut\include\GL;C:\Users\denni\Source\Repos\RayTracing\Common\glew\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

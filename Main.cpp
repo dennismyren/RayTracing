@@ -2,7 +2,7 @@
 #include<iostream>
 using namespace std;
 
-#include <glut.h>
+#include "Common/freeglut/include/GL/glut.h"
 
 #include "Vec3.h"
 #include "Image.h"
@@ -17,7 +17,7 @@ public:
 	Scene(void) {
 		 
 	}
-	void add(Sphere & s) {
+	void add(Sphere s) {
 		spheres.push_back(s); 
 		cout << "Sphere added: " << "r = " << spheres[spheres.size()-1].r << endl;
 	}
@@ -72,6 +72,7 @@ public:
 		HitRec hitRec;
 		//bool hit = false;
 		ray.o = Vec3f(0.0f, 0.0f, 0.0f); //Set the start position of the eye rays to the origin
+		Vec3f vec = Vec3f(1.0f, 0.0f, 0.0f);
 
 		for (int y = 0; y < image->getHeight(); y++) {
 			for (int x = 0; x < image->getWidth(); x++) {
