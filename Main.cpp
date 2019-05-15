@@ -123,8 +123,8 @@ public:
 		Vec3f ambient = (ls.col.cross(hr.col)) * am_str;
 		Vec3f diffuse = (ls.col.cross(hr.col)) * (new_max(hr.n.dot(lightDir), 0.0f));
 
-		Vec3f viewDir = (eye.o - hr.p).getNormalized();
-		Vec3f reflectDir = -lightDir.reflect(hr.n);
+		Vec3f viewDir = (eye.o - shadow.o).getNormalized();
+		Vec3f reflectDir = (-lightDir).reflect(hr.n);
 
 		Vec3f spec = ls.col.cross(hr.col) * pow(new_max(viewDir.dot(reflectDir),0.0f),shineCoef);
 
@@ -149,7 +149,7 @@ public:
 				calcFireRay(ray, hitRec);
 				if (hitRec.anyHit)
 				{
-					cout << "Color : " << hitRec.col.x << " " << hitRec.col.y << " " << hitRec.col.z << endl;
+					//cout << "Color : " << hitRec.col.x << " " << hitRec.col.y << " " << hitRec.col.z << endl;
 					col = hitRec.col;
 				}
 				else 
