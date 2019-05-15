@@ -2,6 +2,7 @@
 #define _RAY_H_
 
 #include "Vec3.h"
+#include <limits>
 
 class Ray {
 public:
@@ -20,6 +21,19 @@ public:
 	static void decRayEps() { rayEps /= 10.0f; }
 };
 
+class LightSource{
+public:
+
+	LightSource(const Vec3f& pos, const Vec3f& col)
+		: pos(pos),
+		  col(col)
+	{
+	}
+
+	Vec3f pos;
+	Vec3f col;
+};
+
 
 class HitRec {
 public:	
@@ -29,6 +43,13 @@ public:
 	Vec3f p;
 	Vec3f n;
 	bool anyHit;
+
+	void reset()
+	{
+		tHit = INT_MAX;
+		anyHit = false;
+		primIndex = 0;
+	}
 };
 
 

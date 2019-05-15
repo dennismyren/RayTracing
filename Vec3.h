@@ -44,6 +44,13 @@ public:
 	Vec3<T> cross(const Vec3 &v) const { return Vec3<T>(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x); }
 	
 	Vec3<T> multCoordwise(const Vec3 &v) const { return Vec3<T>(x * v.x, y * v.y, z * v.z); }
+
+	Vec3<T> reflect(const Vec3 &v) const
+	{
+		Vec3 x = (v*((this->dot(v)) * 2));
+		Vec3 y = Vec3 ( this->x, this->y, this->z );
+		return (y - x);
+	}
 };
 
 template<class T>

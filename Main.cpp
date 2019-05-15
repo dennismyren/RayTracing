@@ -1,5 +1,8 @@
 #include<vector>
 #include<iostream>
+#include<limits>
+#include <algorithm>
+#include <math.h>
 using namespace std;
 
 #include "glut.h"
@@ -9,10 +12,14 @@ using namespace std;
 #include "Ray.h"
 #include "Sphere.h"
 
+#define new_max(x,y) ((x) >= (y)) ? (x) : (y)
+#define new_min(x,y) ((x) <= (y)) ? (x) : (y)
+
 
 class Scene {
 public:
-	vector<Sphere> spheres;		
+	vector<Sphere> spheres;
+	vector<LightSource> light_sources;
 
 	Scene(void) {
 		 
@@ -20,6 +27,11 @@ public:
 	void add(Sphere s) {
 		spheres.push_back(s); 
 		cout << "Sphere added: " << "r = " << spheres[spheres.size()-1].r << endl;
+	}
+
+	void add(LightSource ls) {
+		light_sources.push_back(ls);
+		cout << "Light source added." << endl;
 	}
 
 	void load(char * fileName) {
@@ -61,10 +73,11 @@ public:
 		this->image = image;
 	}
 
-	void searchClosestHit(const Ray & ray, HitRec & hitRec) {
+	bool searchClosestHit(const Ray & ray, HitRec & hitRec) {
 		for (int i = 0; i < scene->spheres.size(); i++) {
 			scene->spheres[i].hit(ray, hitRec);
 		}
+		return hitRec.anyHit;
 	}
 
 	void setPixel(int x, int y, Vec3f vec) const
@@ -72,6 +85,53 @@ public:
 		image->setPixel(x, y, vec);
 		glSetPixel(x, y, vec);
 	}
+
+	void calcFireRay(const Ray & ray, HitRec & hitRec)
+	{
+		Ray shadowRay;
+		HitRec sHitRec;
+		if(searchClosestHit(ray, hitRec))
+		{
+			shadowRay.o = hitRec.p;
+			for (auto& light_source : scene->light_sources)
+			{
+				shadowRay.d = (light_source.pos - shadowRay.o).getNormalized();
+				if(!searchClosestHit(shadowRay, sHitRec))
+				{
+					//cout << "Color : " << hitRec.col.x << " " << hitRec.col.y << " " << hitRec.col.z << "---";
+					hitRec.col = phongCalc(ray, shadowRay, hitRec, light_source);
+					/*cout << "Color : " << hitRec.col.x << " " << hitRec.col.y << " " << hitRec.col.z << endl;*/
+				}
+				else
+				{
+					
+				}
+			}
+		}
+
+	}
+
+
+
+	Vec3f phongCalc(Ray eye, Ray shadow, HitRec hr, LightSource ls)
+	{
+		float am_str = 0.1;
+		float shineCoef = 256;
+		float specularStrength = 0.5;
+
+		Vec3f lightDir = (ls.pos - shadow.o).getNormalized();
+		Vec3f ambient = (ls.col.cross(hr.col)) * am_str;
+		Vec3f diffuse = (ls.col.cross(hr.col)) * (new_max(hr.n.dot(lightDir), 0.0f));
+
+		Vec3f viewDir = (eye.o - hr.p).getNormalized();
+		Vec3f reflectDir = -lightDir.reflect(hr.n);
+
+		Vec3f spec = ls.col.cross(hr.col) * pow(new_max(viewDir.dot(reflectDir),0.0f),shineCoef);
+
+		return ambient + diffuse + spec;
+	}
+
+
 
 
 
@@ -84,10 +144,14 @@ public:
 		for (int y = 0; y < image->getHeight(); y++) {
 			for (int x = 0; x < image->getWidth(); x++) {
 				ray.d = getEyeRayDirection(x, y);
-				hitRec.anyHit = false;
-				searchClosestHit(ray, hitRec);
+				hitRec.reset();
+				//searchClosestHit(ray, hitRec);
+				calcFireRay(ray, hitRec);
 				if (hitRec.anyHit)
+				{
+					cout << "Color : " << hitRec.col.x << " " << hitRec.col.y << " " << hitRec.col.z << endl;
 					col = hitRec.col;
+				}
 				else 
 					col = Vec3f(0.0f, 0.0f, 0.0f);
 				setPixel(x, y, col);
@@ -131,9 +195,11 @@ void init(void)
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
 	Scene * scene = new Scene;
-	scene->add(Sphere(Vec3f(0.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 0.0f, 0.0f)));
-	scene->add(Sphere(Vec3f(0.0f, 0.0f, -5.0f), 1.0f, Vec3f(1.0f, 1.0f, 1.0f)));
 
+	
+	scene->add(Sphere(Vec3f(0.0f, 0.0f, -5.0f), 1.0f, Vec3f(1.0f, 1.0f, 1.0f)));
+	scene->add(Sphere(Vec3f(0.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 0.0f, 0.0f)));
+	scene->add(LightSource(Vec3f(0.0f, 10.0f, 0.0f), Vec3f(1.0f, 1.0f, 1.0f)));
 	Image * image = new Image(640, 480);	
 	
 	rayTracer = new SimpleRayTracer(scene, image);
