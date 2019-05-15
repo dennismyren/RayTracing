@@ -4,7 +4,7 @@
 
 bool Sphere::hit(const Ray & r, HitRec & rec) const {	
 	
-	Vec3f p =c - r.o;
+	Vec3f p = c - r.o;
 	Vec3f d = r.d;
 	float rad = this->r;
 
