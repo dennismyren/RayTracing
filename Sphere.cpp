@@ -1,8 +1,6 @@
 
 #include "Sphere.h"
 
-#include <iostream>
-
 
 bool Sphere::hit(const Ray & r, HitRec & rec) const {	
 	
@@ -15,16 +13,15 @@ bool Sphere::hit(const Ray & r, HitRec & rec) const {
 	float c = p.lenSq() - rad * rad;
 	float t1 = (b + sqrtf(b*b - 4 * a*c)) / (2 * a);
 	float t2 = (b - sqrtf(b*b - 4 * a*c)) / (2 * a);
-	//std::cout << t1 << " : " << t2 << std::endl;
 	rec.tHit = t1 < t2 ? t1 : t2;
 	if (isnan(rec.tHit)) {
-		//rec.anyHit = false;
 		return false;
 	}
 	this->computeSurfaceHitFields(r, rec);
 	rec.anyHit = true;
 	return true;
-	/*Vec3f v = c - r.o;
+	/*
+	Vec3f v = c - r.o;
 	float s = v.dot(r.d);
 	float vLenSq = v.dot(v);
 	float radSq = this->r * this->r; 
@@ -36,7 +33,8 @@ bool Sphere::hit(const Ray & r, HitRec & rec) const {
 		return false;
 	}
 	rec.anyHit = true;
-	return true;*/
+	return true;
+	*/
 }
 
 
