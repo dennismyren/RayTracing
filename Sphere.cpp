@@ -15,10 +15,10 @@ bool Sphere::hit(const Ray & r, HitRec & rec) const {
 	float c = p.lenSq() - rad * rad;
 	float t1 = (b + sqrtf(b*b - 4 * a*c)) / (2 * a);
 	float t2 = (b - sqrtf(b*b - 4 * a*c)) / (2 * a);
-	std::cout << t1 << " : " << t2 << std::endl;
+	//std::cout << t1 << " : " << t2 << std::endl;
 	rec.tHit = t1 < t2 ? t1 : t2;
 	if (isnan(rec.tHit)) {
-		rec.anyHit = false;
+		//rec.anyHit = false;
 		return false;
 	}
 	this->computeSurfaceHitFields(r, rec);

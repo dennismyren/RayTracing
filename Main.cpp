@@ -67,26 +67,30 @@ public:
 		}
 	}
 
+	void setPixel(int x, int y, Vec3f vec) const
+	{
+		image->setPixel(x, y, vec);
+		glSetPixel(x, y, vec);
+	}
+
+
+
 	void fireRays(void) { 
 		Ray ray;
 		HitRec hitRec;
 		//bool hit = false;
 		ray.o = Vec3f(0.0f, 0.0f, 0.0f); //Set the start position of the eye rays to the origin
-
+		Vec3f col;
 		for (int y = 0; y < image->getHeight(); y++) {
 			for (int x = 0; x < image->getWidth(); x++) {
 				ray.d = getEyeRayDirection(x, y);
 				hitRec.anyHit = false;
 				searchClosestHit(ray, hitRec);
-				if (hitRec.anyHit) {
-					Vec3f vec = Vec3f(1.0f, 1.0f, 1.0f);
-					image->setPixel(x, y, vec);
-					glSetPixel(x, y, vec);
-				} else {
-					Vec3f vec = Vec3f(0.0f, 0.0f, 0.0f);
-					image->setPixel(x, y, vec);
-					glSetPixel(x, y, vec);
-				}
+				if (hitRec.anyHit) 
+					col = Vec3f(1.0f, 1.0f, 1.0f);
+				else 
+					col = Vec3f(0.0f, 0.0f, 0.0f);
+				setPixel(x, y, col);
 			}
 		}
 	}
@@ -128,6 +132,7 @@ void init(void)
 
 	Scene * scene = new Scene;
 	scene->add(Sphere(Vec3f(0.0f, 0.0f, -10.0f), 3.0f));
+	scene->add(Sphere(Vec3f(-10.0f, 0.0f, -20.0f), 3.0f));
 
 	Image * image = new Image(640, 480);	
 	
