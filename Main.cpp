@@ -86,8 +86,8 @@ public:
 				ray.d = getEyeRayDirection(x, y);
 				hitRec.anyHit = false;
 				searchClosestHit(ray, hitRec);
-				if (hitRec.anyHit) 
-					col = Vec3f(1.0f, 1.0f, 1.0f);
+				if (hitRec.anyHit)
+					col = hitRec.col;
 				else 
 					col = Vec3f(0.0f, 0.0f, 0.0f);
 				setPixel(x, y, col);
@@ -131,7 +131,7 @@ void init(void)
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
 	Scene * scene = new Scene;
-	scene->add(Sphere(Vec3f(0.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 1.0f, 1.0f)));
+	scene->add(Sphere(Vec3f(0.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 0.0f, 0.0f)));
 	scene->add(Sphere(Vec3f(-10.0f, 0.0f, -20.0f), 3.0f, Vec3f(1.0f, 1.0f, 1.0f)));
 
 	Image * image = new Image(640, 480);	

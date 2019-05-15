@@ -25,6 +25,7 @@ class HitRec {
 public:	
 	float tHit;
 	int primIndex;
+	Vec3f col;
 	Vec3f p;
 	Vec3f n;
 	bool anyHit;

@@ -19,6 +19,7 @@ bool Sphere::hit(const Ray & r, HitRec & rec) const {
 	}
 	this->computeSurfaceHitFields(r, rec);
 	rec.anyHit = true;
+	rec.col = col;
 	return true;
 	/*
 	Vec3f v = c - r.o;
