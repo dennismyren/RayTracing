@@ -42,6 +42,7 @@ public:
 	Vec3f col;
 	Vec3f p;
 	Vec3f n;
+	Vec3f sp;
 	bool anyHit;
 
 	void reset()
@@ -49,6 +50,9 @@ public:
 		tHit = INT_MAX;
 		anyHit = false;
 		primIndex = 0;
+		col = Vec3f(0.0f, 0.0f, 0.0f);
+		p = Vec3f(0.0f, 0.0f, 0.0f);
+		n = Vec3f(0.0f, 0.0f, 0.0f);
 	}
 };
 

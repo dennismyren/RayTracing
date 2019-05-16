@@ -90,16 +90,18 @@ public:
 	{
 		Ray shadowRay;
 		HitRec sHitRec;
+		sHitRec.reset();
 		if(searchClosestHit(ray, hitRec))
 		{
 			shadowRay.o = hitRec.p;
 			for (auto& light_source : scene->light_sources)
 			{
 				shadowRay.d = (light_source.pos - shadowRay.o).getNormalized();
+				//hitRec.col = phongCalc(ray, shadowRay, hitRec, light_source);
 				if(!searchClosestHit(shadowRay, sHitRec))
 				{
-					//cout << "Color : " << hitRec.col.x << " " << hitRec.col.y << " " << hitRec.col.z << "---";
 					hitRec.col = phongCalc(ray, shadowRay, hitRec, light_source);
+					//cout << "Color : " << hitRec.col.x << " " << hitRec.col.y << " " << hitRec.col.z << "---";
 					/*cout << "Color : " << hitRec.col.x << " " << hitRec.col.y << " " << hitRec.col.z << endl;*/
 				}
 				else
@@ -115,20 +117,40 @@ public:
 
 	Vec3f phongCalc(Ray eye, Ray shadow, HitRec hr, LightSource ls)
 	{
-		float am_str = 0.1;
-		float shineCoef = 256;
+		float ambientStrength = 0.5;
 		float specularStrength = 0.5;
+		float shineCoeff = 32;
+		Vec3f ambient = ls.col * ambientStrength;
 
-		Vec3f lightDir = (ls.pos - shadow.o).getNormalized();
-		Vec3f ambient = (ls.col.cross(hr.col)) * am_str;
-		Vec3f diffuse = (ls.col.cross(hr.col)) * (new_max(hr.n.dot(lightDir), 0.0f));
+		Vec3f norm = hr.n.getNormalized();
+		Vec3f lightDir = shadow.d.getNormalized();
 
-		Vec3f viewDir = (eye.o - shadow.o).getNormalized();
-		Vec3f reflectDir = (-lightDir).reflect(hr.n);
+		float diff = new_max(norm.dot(lightDir), 0.0);
+		Vec3f diffuse = ls.col * diff;
 
-		Vec3f spec = ls.col.cross(hr.col) * pow(new_max(viewDir.dot(reflectDir),0.0f),shineCoef);
+		Vec3f viewDir = eye.d.getNormalized();
+		Vec3f reflectDir = -lightDir.reflect(norm);
 
-		return ambient + diffuse + spec;
+		float spec = pow(new_max(viewDir.dot(reflectDir), 0.0), shineCoeff);
+		Vec3f specular = ls.col * specularStrength * spec;
+
+		Vec3f result = (ambient + diffuse + specular) * hr.col;
+
+		return result;
+		//float am_str = 0.1;*/
+		//float shineCoef = 128;
+		//float specularStrength = 0.5;
+
+		//Vec3f lightDir = (ls.pos - shadow.o).getNormalized();
+		////Vec3f ambient = (ls.col.cross(hr.col)) * am_str;
+		//Vec3f diffuse = (ls.col.cross(hr.col)) * (new_max(hr.n.dot(lightDir), 0.0f));
+
+		//Vec3f viewDir = (eye.o - shadow.o).getNormalized();
+		//Vec3f reflectDir = (-lightDir).reflect(hr.n);
+
+		//Vec3f spec = ls.col.cross(hr.col) * pow(new_max(viewDir.dot(reflectDir),0.0f),shineCoef);
+
+		return result;
 	}
 
 
@@ -197,8 +219,8 @@ void init(void)
 	Scene * scene = new Scene;
 
 	
-	scene->add(Sphere(Vec3f(0.0f, 0.0f, -5.0f), 1.0f, Vec3f(1.0f, 1.0f, 1.0f)));
-	scene->add(Sphere(Vec3f(0.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 0.0f, 0.0f)));
+	scene->add(Sphere(Vec3f(0.0f, 0.0f, -5.0f), 1.0f, Vec3f(1.0f, 0.0f, 0.0f)));
+	scene->add(Sphere(Vec3f(0.0f, 0.0f, -20.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f)));
 	scene->add(LightSource(Vec3f(0.0f, 10.0f, 0.0f), Vec3f(1.0f, 1.0f, 1.0f)));
 	Image * image = new Image(640, 480);	
 	

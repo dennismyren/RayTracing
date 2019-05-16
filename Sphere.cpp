@@ -3,7 +3,7 @@
 
 
 bool Sphere::hit(const Ray & r, HitRec & rec) const {	
-	
+
 	Vec3f p = c - r.o;
 	Vec3f d = r.d;
 	float rad = this->r;
@@ -11,18 +11,20 @@ bool Sphere::hit(const Ray & r, HitRec & rec) const {
 	float a = d.lenSq();
 	float b = 2 * p.dot(d);
 	float c = p.lenSq() - rad * rad;
-	float t1 = (b + sqrtf(b*b - 4 * a*c)) / (2 * a);
-	float t2 = (b - sqrtf(b*b - 4 * a*c)) / (2 * a);
+	float t1 = (-b + sqrtf(b*b - 4 * a*c)) / (2 * a);
+	float t2 = (-b - sqrtf(b*b - 4 * a*c)) / (2 * a);
 	float t = t1 < t2 ? t1 : t2;
 
 	if(isnan(t) || t > rec.tHit)
 	{
 		return false;
 	}
+
 	rec.tHit = t;
-	this->computeSurfaceHitFields(r, rec);
-	rec.anyHit = true;
+	computeSurfaceHitFields(r, rec);
 	rec.col = col;
+	rec.anyHit = true;
+	rec.sp = this->c;
 	return true;
 	/*
 	Vec3f v = c - r.o;

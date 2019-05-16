@@ -38,7 +38,9 @@ public:
 	void flip(void) { x = -x; y = -y; z = -z;  }
 
 	Vec3<T> operator*(T t) const { return Vec3<T>(x * t, y * t, z * t); }
+	Vec3<T> operator*(Vec3 v) const { return Vec3<T>(x * v.x, y * v.y, z * v.z); }
 	void operator*=(T t)  { x *= t; y *= t; z *= t; }
+	bool operator==(Vec3 v) const { return x == v.x && y == v.y && z == v.z; }
 	
 	T dot(const Vec3 &v) const { return x * v.x + y * v.y + z * v.z; }
 	Vec3<T> cross(const Vec3 &v) const { return Vec3<T>(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x); }
@@ -49,7 +51,7 @@ public:
 	{
 		Vec3 x = (v*((this->dot(v)) * 2));
 		Vec3 y = Vec3 ( this->x, this->y, this->z );
-		return (y - x);
+		return (x - y);
 	}
 };
 
