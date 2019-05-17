@@ -109,8 +109,9 @@ public:
 				shadowRay.d = (light_source.pos - shadowRay.o).getNormalized();
 				if (!searchClosestHit(shadowRay, sHitRec))
 				{
+					col += PhonSpecCalc(ray, hitRec, light_source);
 					col += PhonDiffCalc(shadowRay, hitRec, light_source);
-					col += PhonSpecCalc(ray, shadowRay, hitRec, light_source);
+					
 				}
 				else
 				{
@@ -122,7 +123,7 @@ public:
 	}
 
 	Vec3f PhonAmbiCalc(HitRec hr, LightSource ls) {
-		float ambientStrength = 0.5;
+		float ambientStrength = 0.1;
 		Vec3f ambient = hr.col * ls.col * ambientStrength;
 		return ambient;
 	}
@@ -136,58 +137,19 @@ public:
 		return diffuse;
 	}
 
-	Vec3f PhonSpecCalc(Ray eye, Ray shadow, HitRec hr, LightSource ls) {
-		float specularStrength = 1;
+	Vec3f PhonSpecCalc(Ray eye, HitRec hr, LightSource ls) {
+		float specularStrength = 1.0f;
 		float shineCoeff = 128;
 
-		Vec3f lightDir = shadow.d.getNormalized();
-		Vec3f viewDir = (eye.o - shadow.o).getNormalized();
-		Vec3f reflectDir = (-lightDir).reflect(hr.n);
-		float spec = pow(new_max(viewDir.dot(reflectDir), 0.0), shineCoeff);
+		Vec3f lightDir = (ls.pos - hr.p).getNormalized();
+		Vec3f viewDir = (eye.o - hr.p).getNormalized();
+		Vec3f reflectDir = hr.n * 2.0f * lightDir.dot(hr.n) - lightDir;
+		//Vec3f reflectDir = (-lightDir).reflect(hr.n);
+		float spec = pow(new_max(viewDir.dot(reflectDir), 0.0f), shineCoeff);
 		Vec3f specular = hr.col * ls.col * specularStrength * spec;
 
 		return specular;
 	}
-
-	Vec3f phongCalc(Ray eye, Ray shadow, HitRec hr, LightSource ls)
-	{
-		float ambientStrength = 0.5;
-		float specularStrength = 1;
-		float shineCoeff = 128;
-		Vec3f ambient = ls.col * ambientStrength;
-
-		Vec3f norm = hr.n.getNormalized();
-		Vec3f lightDir = shadow.d.getNormalized();
-		float diff = new_max(norm.dot(lightDir), 0.0);
-		Vec3f diffuse = ls.col * diff;
-
-		Vec3f viewDir = (eye.o - shadow.o).getNormalized();
-		Vec3f reflectDir = (-lightDir).reflect(hr.n);
-		float spec = pow(new_max(viewDir.dot(reflectDir), 0.0), shineCoeff);
-		Vec3f specular = ls.col * specularStrength * spec;
-
-		Vec3f result = (ambient + diffuse + specular) * hr.col;
-
-		return result;
-		//float am_str = 0.1;*/
-		//float shineCoef = 128;
-		//float specularStrength = 0.5;
-
-		//Vec3f lightDir = (ls.pos - shadow.o).getNormalized();
-		////Vec3f ambient = (ls.col.cross(hr.col)) * am_str;
-		//Vec3f diffuse = (ls.col.cross(hr.col)) * (new_max(hr.n.dot(lightDir), 0.0f));
-
-		//Vec3f viewDir = (eye.o - shadow.o).getNormalized();
-		//Vec3f reflectDir = (-lightDir).reflect(hr.n);
-
-		//Vec3f spec = ls.col.cross(hr.col) * pow(new_max(viewDir.dot(reflectDir),0.0f),shineCoef);
-
-		return result;
-	}
-
-
-
-
 
 	void fireRays(void) {
 		Ray ray;
@@ -244,8 +206,8 @@ void init(void)
 
 
 	scene->add(Sphere(Vec3f(-5.0f, 0.0f, -20.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f)));
-	scene->add(Sphere(Vec3f(0.0f, 0.0f, -20.0f), 1.0f, Vec3f(1.0f, 0.0f, 0.0f)));
-	scene->add(LightSource(Vec3f(0.0f, 0.0f, 1000.0f), Vec3f(1.0f, 1.0f, 1.0f)));
+	scene->add(Sphere(Vec3f(0.0f, 1.0f, -10.0f), 1.0f, Vec3f(1.0f, 0.0f, 0.0f)));
+	scene->add(LightSource(Vec3f(10.0f, 10.0f, 10.0f), Vec3f(0.5f, 0.5f, 0.5f)));
 	Image * image = new Image(640, 480);
 
 	rayTracer = new SimpleRayTracer(scene, image);
