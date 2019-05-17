@@ -245,7 +245,7 @@ void init(void)
 
 	scene->add(Sphere(Vec3f(-5.0f, 0.0f, -20.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f)));
 	scene->add(Sphere(Vec3f(0.0f, 0.0f, -20.0f), 1.0f, Vec3f(1.0f, 0.0f, 0.0f)));
-	scene->add(LightSource(Vec3f(0.0f, 0.0f, -1000.0f), Vec3f(1.0f, 1.0f, 1.0f)));
+	scene->add(LightSource(Vec3f(0.0f, 0.0f, 1000.0f), Vec3f(1.0f, 1.0f, 1.0f)));
 	Image * image = new Image(640, 480);
 
 	rayTracer = new SimpleRayTracer(scene, image);
