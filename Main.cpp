@@ -100,10 +100,11 @@ public:
 		{
 			return Vec3f( 0,0,0 );
 		}
+		
 		Ray shadowRay;
 		Ray reflectionRay;
 		HitRec sHitRec;
-		Vec3f col;
+		Vec3f col = Vec3f (0,0,0);
 		if (searchClosestHit(ray, hitRec))
 		{
 			shadowRay.o = hitRec.p;
@@ -125,8 +126,12 @@ public:
 				}
 
 			}
-			col += calcFireRay(reflectionRay, hitRec, jumpsLeft-1);
-
+			//Vec3f color;
+			hitRec.reset();
+			//color = calcFireRay(reflectionRay, hitRec, jumpsLeft - 1);
+			//col += color == Vec3f(0, 0, 0) ? color : Vec3f(0,1,0);
+			col += calcFireRay(reflectionRay, hitRec, jumpsLeft - 1);
+			//*pow(new_max(reflectionRay.d.dot(ray.d), 0.0f), 1)
 		}
 		return col;
 	}
@@ -163,7 +168,7 @@ public:
 	void fireRays(void) {
 		Ray ray;
 		HitRec hitRec;
-		int jumps = 1;
+		int jumps = 100;
 		ray.o = Vec3f(0.0f, 0.0f, 0.0f); //Set the start position of the eye rays to the origin
 		Vec3f col;
 		for (int y = 0; y < image->getHeight(); y++) {
@@ -203,7 +208,7 @@ void init(void)
 {
 
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-	glutInitWindowSize(640, 480);
+	glutInitWindowSize(1280, 960);
 	glutCreateWindow("SimpleRayTracer");
 	glutDisplayFunc(display);
 	glutReshapeFunc(changeSize);
@@ -214,10 +219,12 @@ void init(void)
 	Scene * scene = new Scene;
 
 
-	scene->add(Sphere(Vec3f(-5.0f, 0.0f, -20.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f)));
-	scene->add(Sphere(Vec3f(0.0f, 1.0f, -10.0f), 1.0f, Vec3f(1.0f, 0.0f, 0.0f)));
-	scene->add(LightSource(Vec3f(10.0f, 10.0f, 10.0f), Vec3f(0.5f, 0.5f, 0.5f)));
-	Image * image = new Image(640, 480);
+	scene->add(Sphere(Vec3f(-3.5f, 0.0f, -12.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f)));
+	scene->add(Sphere(Vec3f(0.0f, 1.5f, -10.0f), 1.0f, Vec3f(1.0f, 1.0f, 0.0f)));
+	scene->add(Sphere(Vec3f(1.5f, 0.0f, -12.0f), 1.0f, Vec3f(1.0f, 0.0f, 1.0f)));
+	scene->add(Sphere(Vec3f(0.0f, -1.5f, -10.0f), 1.0f, Vec3f(0.0f, 1.0f, 1.0f)));
+	scene->add(LightSource(Vec3f(0.0f, 0.0f, 10.0f), Vec3f(0.5f, 0.5f, 0.5f)));
+	Image * image = new Image(1280, 960);
 
 	rayTracer = new SimpleRayTracer(scene, image);
 
