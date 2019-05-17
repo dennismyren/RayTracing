@@ -49,9 +49,7 @@ public:
 
 	Vec3<T> reflect(const Vec3 &v) const
 	{
-		Vec3 x = (v*((this->dot(v)) * 2));
-		Vec3 y = Vec3 ( this->x, this->y, this->z );
-		return (x - y);
+		return v * 2.0f * this->dot(v) - *this;
 	}
 };
 

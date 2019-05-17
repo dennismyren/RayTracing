@@ -42,7 +42,6 @@ public:
 	Vec3f col;
 	Vec3f p;
 	Vec3f n;
-	Vec3f sp;
 	bool anyHit;
 
 	void reset()

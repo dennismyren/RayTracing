@@ -94,14 +94,21 @@ public:
 		glSetPixel(x, y, vec);
 	}
 
-	Vec3f calcFireRay(const Ray & ray, HitRec & hitRec)
+	Vec3f calcFireRay(const Ray & ray, HitRec & hitRec, int jumpsLeft)
 	{
+		if(jumpsLeft < 0)
+		{
+			return Vec3f( 0,0,0 );
+		}
 		Ray shadowRay;
+		Ray reflectionRay;
 		HitRec sHitRec;
 		Vec3f col;
 		if (searchClosestHit(ray, hitRec))
 		{
 			shadowRay.o = hitRec.p;
+			reflectionRay.o = hitRec.p;
+			reflectionRay.d = (-ray.d).reflect(hitRec.n);
 			for (auto& light_source : scene->light_sources)
 			{
 				col = PhonAmbiCalc(hitRec, light_source);
@@ -109,15 +116,17 @@ public:
 				shadowRay.d = (light_source.pos - shadowRay.o).getNormalized();
 				if (!searchClosestHit(shadowRay, sHitRec))
 				{
+					col += PhonDiffCalc(hitRec, light_source);
 					col += PhonSpecCalc(ray, hitRec, light_source);
-					col += PhonDiffCalc(shadowRay, hitRec, light_source);
-					
 				}
 				else
 				{
 					//col = Vec3f(0, 1, 0);
 				}
+
 			}
+			col += calcFireRay(reflectionRay, hitRec, jumpsLeft-1);
+
 		}
 		return col;
 	}
@@ -128,9 +137,9 @@ public:
 		return ambient;
 	}
 
-	Vec3f PhonDiffCalc(Ray shadow, HitRec hr, LightSource ls) {
+	Vec3f PhonDiffCalc(HitRec hr, LightSource ls) {
 		Vec3f norm = hr.n.getNormalized();
-		Vec3f lightDir = shadow.d.getNormalized();
+		Vec3f lightDir = (ls.pos - hr.p).getNormalized();
 		float diff = new_max(norm.dot(lightDir), 0.0);
 		Vec3f diffuse = hr.col * ls.col * diff;
 
@@ -143,8 +152,8 @@ public:
 
 		Vec3f lightDir = (ls.pos - hr.p).getNormalized();
 		Vec3f viewDir = (eye.o - hr.p).getNormalized();
-		Vec3f reflectDir = hr.n * 2.0f * lightDir.dot(hr.n) - lightDir;
-		//Vec3f reflectDir = (-lightDir).reflect(hr.n);
+		//Vec3f reflectDir = hr.n * 2.0f * lightDir.dot(hr.n) - lightDir;
+		Vec3f reflectDir = (lightDir).reflect(hr.n);
 		float spec = pow(new_max(viewDir.dot(reflectDir), 0.0f), shineCoeff);
 		Vec3f specular = hr.col * ls.col * specularStrength * spec;
 
@@ -154,14 +163,14 @@ public:
 	void fireRays(void) {
 		Ray ray;
 		HitRec hitRec;
-		//bool hit = false;
+		int jumps = 1;
 		ray.o = Vec3f(0.0f, 0.0f, 0.0f); //Set the start position of the eye rays to the origin
 		Vec3f col;
 		for (int y = 0; y < image->getHeight(); y++) {
 			for (int x = 0; x < image->getWidth(); x++) {
 				ray.d = getEyeRayDirection(x, y);
 				hitRec.reset();
-				col = calcFireRay(ray, hitRec);
+				col = calcFireRay(ray, hitRec, jumps);
 				setPixel(x, y, col);
 			}
 		}
