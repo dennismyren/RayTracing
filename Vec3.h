@@ -40,6 +40,9 @@ public:
 	Vec3<T> operator*(T t) const { return Vec3<T>(x * t, y * t, z * t); }
 	Vec3<T> operator*(Vec3 v) const { return Vec3<T>(x * v.x, y * v.y, z * v.z); }
 	void operator*=(T t)  { x *= t; y *= t; z *= t; }
+	Vec3<T> operator/(T t) const { return Vec3<T>(x / t, y / t, z / t); }
+	void operator/=(T t) { x /= t; y /= t; z /= t; }
+
 	bool operator==(Vec3 v) const { return x == v.x && y == v.y && z == v.z; }
 	
 	T dot(const Vec3 &v) const { return x * v.x + y * v.y + z * v.z; }

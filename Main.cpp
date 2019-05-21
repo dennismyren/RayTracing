@@ -96,11 +96,11 @@ public:
 
 	Vec3f calcFireRay(const Ray & ray, HitRec & hitRec, int jumpsLeft)
 	{
-		if(jumpsLeft < 0)
+		if (jumpsLeft < 0)
 		{
-			return Vec3f( 0,0,0 );
+			return Vec3f(0, 0, 0);
 		}
-		
+		hitRec.reset();
 		Ray shadowRay;
 		Ray reflectionRay;
 		HitRec sHitRec;
@@ -126,12 +126,13 @@ public:
 					lightCol += PhonSpecCalc(ray, hitRec, light_source);
 				}
 			}
-			hitRec.reset();
-			opacityCol *= sphere->opacity;
+			if (sphere->opacity > 0.01f) {
+				opacityCol = calcFireRay(createRefractionRay(*sphere, hitRec.n, ray.d, hitRec.p), hitRec, jumpsLeft-1) * sphere->opacity;
+			}
 			lightCol *= sphere->lightReflection;
 			reflectCol += calcFireRay(reflectionRay, hitRec, jumpsLeft - 1) * sphere->reflection;
 		}
-		return (lightCol + reflectCol);
+		return (lightCol + reflectCol + opacityCol);
 	}
 
 	Vec3f PhonAmbiCalc(HitRec hr, LightSource ls) {
@@ -170,31 +171,53 @@ public:
 		float inM = 1;
 		float outM = ri;
 
-		if(idotN < 0)
+		if (idotN < 0)
 		{
 			idotN *= -1;
 		}
 		else
 		{
-			//float tmp;
-			normal = -norm;/*
-			tmp = inM;
-			inM = outM;
-			outM = tmp;*/
+			normal = -norm;
 			std::swap(inM, outM);
 		}
-
 		float ref = inM / outM;
+		float cosAngle = in.dot(norm) / (in.len() * norm.len());
+		float angle1 = acos(cosAngle);
+		float angle2 = asin(ref / sin(angle1));
 
+		Vec3f C = norm * cos(angle1);
+		Vec3f M = (in + C) / sin(angle1);
+		Vec3f T = M * sin(angle2) - norm * cos(angle2);
+		return T;
+	}
 
-		
+	Ray createRefractionRay(Sphere sp, Vec3f norm, Vec3f direction, Vec3f point) {
+		Ray ray;
+		Ray refractedRay;
+		HitRec hitrec;
+		hitrec.reset();
+		ray.d = refraction(direction, norm, sp.refractiveIndex);
+		ray.o = point;
+		if (!sp.hit(ray, hitrec))
+		{
+			refractedRay.o = point;
+			refractedRay.d = direction;
+		}
+		else
+		{
+			sp.computeSurfaceHitFields(ray, hitrec);
+			refractedRay.o = hitrec.p;
+			refractedRay.d = refraction(ray.d, hitrec.n, sp.refractiveIndex);
+		}
+
+		return refractedRay;
 	}
 
 
 	void fireRays(void) {
 		Ray ray;
 		HitRec hitRec;
-		int jumps = 100;
+		int jumps = 3;
 		ray.o = Vec3f(0.0f, 0.0f, 0.0f); //Set the start position of the eye rays to the origin
 		Vec3f col;
 		for (int y = 0; y < image->getHeight(); y++) {
@@ -244,11 +267,11 @@ void init(void)
 
 	Scene * scene = new Scene;
 
-
-	scene->add(Sphere(Vec3f(-4.0f, 0.0f, -10.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f), 1,0,0,1));
-	scene->add(Sphere(Vec3f(0.0f, 2.5f, -10.0f), 1.0f, Vec3f(1.0f, 1.0f, 0.0f), 0, 1, 0,1));
-	scene->add(Sphere(Vec3f(4.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 0.0f, 1.0f), 1, 1, 0,1));
-	scene->add(Sphere(Vec3f(0.0f, -2.5f, -10.0f), 1.0f, Vec3f(0.0f, 1.0f, 1.0f), 0, 0.5, 0,1));
+	scene->add(Sphere(Vec3f(0.0f, 0.0f, -7.0f), 1.5f, Vec3f(0.0f, 0.0f, 1.0f), 0, 0, 1, 1.5));
+	scene->add(Sphere(Vec3f(-4.0f, 0.0f, -10.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f), 1, 0, 0, 1));
+	scene->add(Sphere(Vec3f(0.0f, 2.5f, -10.0f), 1.0f, Vec3f(1.0f, 1.0f, 0.0f), 0, 1, 0, 1));
+	scene->add(Sphere(Vec3f(4.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 0.0f, 1.0f), 1, 1, 0, 1));
+	scene->add(Sphere(Vec3f(0.0f, -2.5f, -10.0f), 1.0f, Vec3f(0.0f, 1.0f, 1.0f), 0, 0.5, 0, 1));
 	scene->add(LightSource(Vec3f(0.0f, 0.0f, 10.0f), Vec3f(0.5f, 0.5f, 0.5f)));
 	Image * image = new Image(1280, 960);
 
