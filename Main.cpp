@@ -104,40 +104,38 @@ public:
 		Ray shadowRay;
 		Ray reflectionRay;
 		HitRec sHitRec;
-		Vec3f col = Vec3f (0,0,0);
+		Sphere *sphere;
+		//Vec3f col = Vec3f (0,0,0);
+		Vec3f lightCol = Vec3f(0, 0, 0);
+		Vec3f opacityCol = Vec3f(0, 0, 0);
+		Vec3f reflectCol = Vec3f(0, 0, 0);
 		if (searchClosestHit(ray, hitRec))
 		{
+			sphere = &scene->spheres[hitRec.primIndex];
 			shadowRay.o = hitRec.p;
 			reflectionRay.o = hitRec.p;
 			reflectionRay.d = (-ray.d).reflect(hitRec.n);
 			for (auto& light_source : scene->light_sources)
 			{
-				col = PhonAmbiCalc(hitRec, light_source);
+				lightCol += PhonAmbiCalc(hitRec, light_source);
 				sHitRec.reset();
 				shadowRay.d = (light_source.pos - shadowRay.o).getNormalized();
 				if (!searchClosestHit(shadowRay, sHitRec))
 				{
-					col += PhonDiffCalc(hitRec, light_source);
-					col += PhonSpecCalc(ray, hitRec, light_source);
+					lightCol += PhonDiffCalc(hitRec, light_source);
+					lightCol += PhonSpecCalc(ray, hitRec, light_source);
 				}
-				else
-				{
-					//col = Vec3f(0, 1, 0);
-				}
-
 			}
-			//Vec3f color;
 			hitRec.reset();
-			//color = calcFireRay(reflectionRay, hitRec, jumpsLeft - 1);
-			//col += color == Vec3f(0, 0, 0) ? color : Vec3f(0,1,0);
-			col += calcFireRay(reflectionRay, hitRec, jumpsLeft - 1);
-			//*pow(new_max(reflectionRay.d.dot(ray.d), 0.0f), 1)
+			opacityCol *= sphere->opacity;
+			lightCol *= sphere->lightReflection;
+			reflectCol += calcFireRay(reflectionRay, hitRec, jumpsLeft - 1) * sphere->reflection;
 		}
-		return col;
+		return (lightCol + reflectCol);
 	}
 
 	Vec3f PhonAmbiCalc(HitRec hr, LightSource ls) {
-		float ambientStrength = 0.1;
+		float ambientStrength = 0.5;
 		Vec3f ambient = hr.col * ls.col * ambientStrength;
 		return ambient;
 	}
@@ -164,6 +162,34 @@ public:
 
 		return specular;
 	}
+
+	Vec3f refraction(const Vec3f & in, const Vec3f & norm, const float ri)
+	{
+		float idotN = in.dot(norm);
+		Vec3f normal = norm;
+		float inM = 1;
+		float outM = ri;
+
+		if(idotN < 0)
+		{
+			idotN *= -1;
+		}
+		else
+		{
+			//float tmp;
+			normal = -norm;/*
+			tmp = inM;
+			inM = outM;
+			outM = tmp;*/
+			std::swap(inM, outM);
+		}
+
+		float ref = inM / outM;
+
+
+		
+	}
+
 
 	void fireRays(void) {
 		Ray ray;
@@ -219,10 +245,10 @@ void init(void)
 	Scene * scene = new Scene;
 
 
-	scene->add(Sphere(Vec3f(-3.5f, 0.0f, -12.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f)));
-	scene->add(Sphere(Vec3f(0.0f, 1.5f, -10.0f), 1.0f, Vec3f(1.0f, 1.0f, 0.0f)));
-	scene->add(Sphere(Vec3f(1.5f, 0.0f, -12.0f), 1.0f, Vec3f(1.0f, 0.0f, 1.0f)));
-	scene->add(Sphere(Vec3f(0.0f, -1.5f, -10.0f), 1.0f, Vec3f(0.0f, 1.0f, 1.0f)));
+	scene->add(Sphere(Vec3f(-4.0f, 0.0f, -10.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f), 1,0,0,1));
+	scene->add(Sphere(Vec3f(0.0f, 2.5f, -10.0f), 1.0f, Vec3f(1.0f, 1.0f, 0.0f), 0, 1, 0,1));
+	scene->add(Sphere(Vec3f(4.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 0.0f, 1.0f), 1, 1, 0,1));
+	scene->add(Sphere(Vec3f(0.0f, -2.5f, -10.0f), 1.0f, Vec3f(0.0f, 1.0f, 1.0f), 0, 0.5, 0,1));
 	scene->add(LightSource(Vec3f(0.0f, 0.0f, 10.0f), Vec3f(0.5f, 0.5f, 0.5f)));
 	Image * image = new Image(1280, 960);
 
