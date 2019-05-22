@@ -3,40 +3,46 @@
 
 #include "Vec3.h"
 #include <limits>
+#include <vector>
 
 class Ray {
 public:
 	Vec3f o, d;
-	float tClip;	
+	float tClip;
 	static float rayEps;
 	static float tMax;
 public:
-	Ray() : tClip(tMax) { }	
+	Ray() : tClip(tMax) { }
 	Ray(const Vec3f & o, const Vec3f& d, float tclip = tMax) : o(o), d(d), tClip(tMax) { }
-	
+
 	void epsMoveStartAlongSurfaceNormal(const Vec3f & n) { o = o + n * rayEps; }
 	void epsMoveStartAlongDir() { o = o + d * rayEps; }
-	
+
 	static void incRayEps() { rayEps *= 10.0f; }
 	static void decRayEps() { rayEps /= 10.0f; }
 };
 
-class LightSource{
+class LightSource {
 public:
 
-	LightSource(const Vec3f& pos, const Vec3f& col)
-		: pos(pos),
-		  col(col)
+	LightSource(const Vec3f& pos0, const Vec3f& pos1, const Vec3f& pos2, const Vec3f& col)
+		:
+		col(col)
 	{
+		points.push_back(pos0);
+		points.push_back(pos1);
+		points.push_back(pos2);
+		size = points.size();
 	}
 
-	Vec3f pos;
+	std::vector<Vec3f>points;
 	Vec3f col;
+	int size;
 };
 
 
 class HitRec {
-public:	
+public:
 	float tHit;
 	int primIndex;
 	Vec3f col;

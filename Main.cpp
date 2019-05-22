@@ -73,7 +73,12 @@ public:
 		this->image = image;
 	}
 
-	bool searchClosestHit(const Ray & ray, HitRec & hitRec) {
+	bool searchClosestHit(const Ray & ray, HitRec & hitRec, int count = 5) {
+		hitRec.reset();
+		if (count == 0)
+		{
+			return false;
+		}
 		for (int i = 0; i < scene->spheres.size(); i++) {
 			if (scene->spheres[i].hit(ray, hitRec)) {
 				hitRec.primIndex = i;
@@ -105,119 +110,75 @@ public:
 		Ray reflectionRay;
 		HitRec sHitRec;
 		Sphere *sphere;
-		//Vec3f col = Vec3f (0,0,0);
 		Vec3f lightCol = Vec3f(0, 0, 0);
-		Vec3f opacityCol = Vec3f(0, 0, 0);
 		Vec3f reflectCol = Vec3f(0, 0, 0);
+
 		if (searchClosestHit(ray, hitRec))
 		{
 			sphere = &scene->spheres[hitRec.primIndex];
 			shadowRay.o = hitRec.p;
+
 			reflectionRay.o = hitRec.p;
 			reflectionRay.d = (-ray.d).reflect(hitRec.n);
-			for (auto& light_source : scene->light_sources)
+			if (sphere->lightReflection > 0.01f)
 			{
-				lightCol += PhonAmbiCalc(hitRec, light_source);
-				sHitRec.reset();
-				shadowRay.d = (light_source.pos - shadowRay.o).getNormalized();
-				if (!searchClosestHit(shadowRay, sHitRec))
+				for (auto& light_source : scene->light_sources)
 				{
-					lightCol += PhonDiffCalc(hitRec, light_source);
-					lightCol += PhonSpecCalc(ray, hitRec, light_source);
+					lightCol += PhonAmbiCalc(light_source.col);
+					for(auto& lp : light_source.points)
+					{
+						sHitRec.reset();
+						shadowRay.d = (lp - shadowRay.o).getNormalized();
+						if (!searchClosestHit(shadowRay, sHitRec))
+						{
+							lightCol += PhonDiffCalc(hitRec, light_source.col, lp) / light_source.size;
+							lightCol += PhonSpecCalc(ray, hitRec, light_source.col, lp) / light_source.size;
+						}
+					}
 				}
+				lightCol *= sphere->col * sphere->lightReflection;
 			}
-			if (sphere->opacity > 0.01f) {
-				opacityCol = calcFireRay(createRefractionRay(*sphere, hitRec.n, ray.d, hitRec.p), hitRec, jumpsLeft-1) * sphere->opacity;
+			if (sphere->reflection > 0.01f)
+			{
+				reflectCol += calcFireRay(reflectionRay, hitRec, jumpsLeft - 1) * sphere->reflection;
 			}
-			lightCol *= sphere->lightReflection;
-			reflectCol += calcFireRay(reflectionRay, hitRec, jumpsLeft - 1) * sphere->reflection;
 		}
-		return (lightCol + reflectCol + opacityCol);
+		return (lightCol + reflectCol);
 	}
 
-	Vec3f PhonAmbiCalc(HitRec hr, LightSource ls) {
+	Vec3f PhonAmbiCalc(Vec3f col) {
 		float ambientStrength = 0.5;
-		Vec3f ambient = hr.col * ls.col * ambientStrength;
+		Vec3f ambient = col * ambientStrength;
 		return ambient;
 	}
 
-	Vec3f PhonDiffCalc(HitRec hr, LightSource ls) {
+	Vec3f PhonDiffCalc(HitRec hr, Vec3f lcol, Vec3f lpos) {
 		Vec3f norm = hr.n.getNormalized();
-		Vec3f lightDir = (ls.pos - hr.p).getNormalized();
+		Vec3f lightDir = (lpos - hr.p).getNormalized();
 		float diff = new_max(norm.dot(lightDir), 0.0);
-		Vec3f diffuse = hr.col * ls.col * diff;
+		Vec3f diffuse = lcol * diff;
 
 		return diffuse;
 	}
 
-	Vec3f PhonSpecCalc(Ray eye, HitRec hr, LightSource ls) {
+	Vec3f PhonSpecCalc(Ray eye, HitRec hr, Vec3f lcol, Vec3f lpos) {
 		float specularStrength = 1.0f;
 		float shineCoeff = 128;
 
-		Vec3f lightDir = (ls.pos - hr.p).getNormalized();
+		Vec3f lightDir = (lpos - hr.p).getNormalized();
 		Vec3f viewDir = (eye.o - hr.p).getNormalized();
 		//Vec3f reflectDir = hr.n * 2.0f * lightDir.dot(hr.n) - lightDir;
 		Vec3f reflectDir = (lightDir).reflect(hr.n);
 		float spec = pow(new_max(viewDir.dot(reflectDir), 0.0f), shineCoeff);
-		Vec3f specular = hr.col * ls.col * specularStrength * spec;
+		Vec3f specular = lcol * specularStrength * spec;
 
 		return specular;
 	}
 
-	Vec3f refraction(const Vec3f & in, const Vec3f & norm, const float ri)
-	{
-		float idotN = in.dot(norm);
-		Vec3f normal = norm;
-		float inM = 1;
-		float outM = ri;
-
-		if (idotN < 0)
-		{
-			idotN *= -1;
-		}
-		else
-		{
-			normal = -norm;
-			std::swap(inM, outM);
-		}
-		float ref = inM / outM;
-		float cosAngle = in.dot(norm) / (in.len() * norm.len());
-		float angle1 = acos(cosAngle);
-		float angle2 = asin(ref / sin(angle1));
-
-		Vec3f C = norm * cos(angle1);
-		Vec3f M = (in + C) / sin(angle1);
-		Vec3f T = M * sin(angle2) - norm * cos(angle2);
-		return T;
-	}
-
-	Ray createRefractionRay(Sphere sp, Vec3f norm, Vec3f direction, Vec3f point) {
-		Ray ray;
-		Ray refractedRay;
-		HitRec hitrec;
-		hitrec.reset();
-		ray.d = refraction(direction, norm, sp.refractiveIndex);
-		ray.o = point;
-		if (!sp.hit(ray, hitrec))
-		{
-			refractedRay.o = point;
-			refractedRay.d = direction;
-		}
-		else
-		{
-			sp.computeSurfaceHitFields(ray, hitrec);
-			refractedRay.o = hitrec.p;
-			refractedRay.d = refraction(ray.d, hitrec.n, sp.refractiveIndex);
-		}
-
-		return refractedRay;
-	}
-
-
 	void fireRays(void) {
 		Ray ray;
 		HitRec hitRec;
-		int jumps = 3;
+		int jumps = 10;
 		ray.o = Vec3f(0.0f, 0.0f, 0.0f); //Set the start position of the eye rays to the origin
 		Vec3f col;
 		for (int y = 0; y < image->getHeight(); y++) {
@@ -266,13 +227,15 @@ void init(void)
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
 	Scene * scene = new Scene;
+	Vec3f point = Vec3f(-5.0f, 0.0f, 0.0f);
 
-	scene->add(Sphere(Vec3f(0.0f, 0.0f, -7.0f), 1.5f, Vec3f(0.0f, 0.0f, 1.0f), 0, 0, 1, 1.5));
-	scene->add(Sphere(Vec3f(-4.0f, 0.0f, -10.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f), 1, 0, 0, 1));
-	scene->add(Sphere(Vec3f(0.0f, 2.5f, -10.0f), 1.0f, Vec3f(1.0f, 1.0f, 0.0f), 0, 1, 0, 1));
-	scene->add(Sphere(Vec3f(4.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 0.0f, 1.0f), 1, 1, 0, 1));
-	scene->add(Sphere(Vec3f(0.0f, -2.5f, -10.0f), 1.0f, Vec3f(0.0f, 1.0f, 1.0f), 0, 0.5, 0, 1));
-	scene->add(LightSource(Vec3f(0.0f, 0.0f, 10.0f), Vec3f(0.5f, 0.5f, 0.5f)));
+	scene->add(Sphere(Vec3f(-4.0f, 0.0f, -100.0f), 80.0f, Vec3f(0.0f, 0.0f, 1.0f), 0, 1));
+
+	scene->add(Sphere(Vec3f(-4.0f, 0.0f, -10.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f), 1, 0));
+	scene->add(Sphere(Vec3f(0.0f, 2.5f, -10.0f), 1.0f, Vec3f(1.0f, 1.0f, 0.0f), 0, 1));
+	scene->add(Sphere(Vec3f(4.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 0.0f, 1.0f), 1, 1));
+	scene->add(Sphere(Vec3f(0.0f, -2.5f, -10.0f), 1.0f, Vec3f(0.0f, 1.0f, 1.0f), 0, 0.5));
+	scene->add(LightSource(Vec3f(0.0f, 0.0f, 10.0f), point,point, Vec3f(0.5f, 0.5f, 0.5f)));
 	Image * image = new Image(1280, 960);
 
 	rayTracer = new SimpleRayTracer(scene, image);
