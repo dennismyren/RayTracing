@@ -32,6 +32,7 @@ public:
 		points.push_back(pos0);
 		points.push_back(pos1);
 		points.push_back(pos2);
+
 		size = points.size();
 	}
 

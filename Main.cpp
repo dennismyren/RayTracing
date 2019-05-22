@@ -3,6 +3,7 @@
 #include<limits>
 #include <algorithm>
 #include <math.h>
+#include <chrono>
 using namespace std;
 
 #include "glut.h"
@@ -11,6 +12,7 @@ using namespace std;
 #include "Image.h"
 #include "Ray.h"
 #include "Sphere.h"
+#include "Camera.h"
 
 #define new_max(x,y) ((x) >= (y)) ? (x) : (y)
 #define new_min(x,y) ((x) <= (y)) ? (x) : (y)
@@ -52,6 +54,8 @@ class SimpleRayTracer {
 private:
 	Scene * scene;
 	Image * image;
+	Camera cam = Camera(Vec3f(1.0f, 0.0f, 0.0f));
+	int intersectionTestsCount;
 
 	Vec3f getEyeRayDirection(int x, int y) {
 		//Uses a fix camera looking along the negative z-axis
@@ -68,22 +72,25 @@ private:
 
 
 public:
+
+	int getIntersectCount()
+	{
+		return intersectionTestsCount;
+	}
+
 	SimpleRayTracer(Scene * scene, Image * image) {
 		this->scene = scene;
 		this->image = image;
 	}
 
-	bool searchClosestHit(const Ray & ray, HitRec & hitRec, int count = 5) {
+	bool searchClosestHit(const Ray & ray, HitRec & hitRec) {
 		hitRec.reset();
-		if (count == 0)
-		{
-			return false;
-		}
+
 		for (int i = 0; i < scene->spheres.size(); i++) {
 			if (scene->spheres[i].hit(ray, hitRec)) {
 				hitRec.primIndex = i;
 			}
-
+			intersectionTestsCount++;
 		}
 
 		if (hitRec.anyHit) {
@@ -167,7 +174,6 @@ public:
 
 		Vec3f lightDir = (lpos - hr.p).getNormalized();
 		Vec3f viewDir = (eye.o - hr.p).getNormalized();
-		//Vec3f reflectDir = hr.n * 2.0f * lightDir.dot(hr.n) - lightDir;
 		Vec3f reflectDir = (lightDir).reflect(hr.n);
 		float spec = pow(new_max(viewDir.dot(reflectDir), 0.0f), shineCoeff);
 		Vec3f specular = lcol * specularStrength * spec;
@@ -178,8 +184,8 @@ public:
 	void fireRays(void) {
 		Ray ray;
 		HitRec hitRec;
-		int jumps = 10;
-		ray.o = Vec3f(0.0f, 0.0f, 0.0f); //Set the start position of the eye rays to the origin
+		int jumps = 3;
+		ray.o = cam.pos; //Set the start position of the eye rays to the origin
 		Vec3f col;
 		for (int y = 0; y < image->getHeight(); y++) {
 			for (int x = 0; x < image->getWidth(); x++) {
@@ -201,9 +207,11 @@ void display(void) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	time_t start = time(NULL);
 	rayTracer->fireRays();
-
-
+	time_t finish = time(NULL);
+	cout << "Elapsed time : " << finish - start << endl;
+	cout << "Intersection tests : " << rayTracer->getIntersectCount() << endl;
 	glFlush();
 }
 
@@ -227,7 +235,9 @@ void init(void)
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
 	Scene * scene = new Scene;
-	Vec3f point = Vec3f(-5.0f, 0.0f, 0.0f);
+	Vec3f point1 = Vec3f(-0.05f, 0.0f, 10.0f);
+	Vec3f point2 = Vec3f(0.05f, 0.0f, 10.0f);
+	Vec3f point3 = Vec3f(0.0f, -0.05f, 10.0f);
 
 	scene->add(Sphere(Vec3f(-4.0f, 0.0f, -100.0f), 80.0f, Vec3f(0.0f, 0.0f, 1.0f), 0, 1));
 
@@ -235,7 +245,7 @@ void init(void)
 	scene->add(Sphere(Vec3f(0.0f, 2.5f, -10.0f), 1.0f, Vec3f(1.0f, 1.0f, 0.0f), 0, 1));
 	scene->add(Sphere(Vec3f(4.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 0.0f, 1.0f), 1, 1));
 	scene->add(Sphere(Vec3f(0.0f, -2.5f, -10.0f), 1.0f, Vec3f(0.0f, 1.0f, 1.0f), 0, 0.5));
-	scene->add(LightSource(Vec3f(0.0f, 0.0f, 10.0f), point,point, Vec3f(0.5f, 0.5f, 0.5f)));
+	scene->add(LightSource(point1, point2,point3, Vec3f(0.5f, 0.5f, 0.5f)));
 	Image * image = new Image(1280, 960);
 
 	rayTracer = new SimpleRayTracer(scene, image);
