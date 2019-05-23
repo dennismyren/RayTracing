@@ -25,14 +25,11 @@ public:
 class LightSource {
 public:
 
-	LightSource(const Vec3f& pos0, const Vec3f& pos1, const Vec3f& pos2, const Vec3f& col)
+	LightSource(std::vector<Vec3f> p, const Vec3f& col)
 		:
-		col(col)
+		col(col),
+		points(p)
 	{
-		points.push_back(pos0);
-		points.push_back(pos1);
-		points.push_back(pos2);
-
 		size = points.size();
 	}
 

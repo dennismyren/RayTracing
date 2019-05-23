@@ -54,7 +54,7 @@ class SimpleRayTracer {
 private:
 	Scene * scene;
 	Image * image;
-	Camera cam = Camera(Vec3f(1.0f, 0.0f, 0.0f));
+	Camera cam = Camera(Vec3f(0.0f, 0.0f, 0.0f));
 	int intersectionTestsCount;
 
 	Vec3f getEyeRayDirection(int x, int y) {
@@ -132,7 +132,7 @@ public:
 				for (auto& light_source : scene->light_sources)
 				{
 					lightCol += PhonAmbiCalc(light_source.col);
-					for(auto& lp : light_source.points)
+					for (auto& lp : light_source.points)
 					{
 						sHitRec.reset();
 						shadowRay.d = (lp - shadowRay.o).getNormalized();
@@ -194,6 +194,9 @@ public:
 				col = calcFireRay(ray, hitRec, jumps);
 				setPixel(x, y, col);
 			}
+			if (y % 50 == 0) {
+				cout << "Did line: " << y << " out of " << image->getHeight() << endl;
+			}
 		}
 	}
 };
@@ -222,11 +225,27 @@ void changeSize(int w, int h) {
 	glViewport(0, 0, w, h);
 }
 
+std::vector<Vec3f> createVecorsAroundPoint(Vec3f p) {
+	std::vector<Vec3f> points;
+	float dist = 1;
+	points.push_back(p);
+	points.push_back(p + Vec3f(dist * -2, dist * 2, 0));
+	points.push_back(p + Vec3f(dist * 0, dist * 2, 0));
+	points.push_back(p + Vec3f(dist * 2, dist * 2, 0));
+	points.push_back(p + Vec3f(dist * -1, 0, 0));
+	points.push_back(p + Vec3f(dist * 1, 0, 0));
+	points.push_back(p + Vec3f(0, dist * -2, 0));
+
+
+	return points;
+}
+
 void init(void)
 {
-
+	int w = 640;
+	int h = 480;
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-	glutInitWindowSize(1280, 960);
+	glutInitWindowSize(w, h);
 	glutCreateWindow("SimpleRayTracer");
 	glutDisplayFunc(display);
 	glutReshapeFunc(changeSize);
@@ -235,18 +254,19 @@ void init(void)
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
 	Scene * scene = new Scene;
-	Vec3f point1 = Vec3f(-0.05f, 0.0f, 10.0f);
-	Vec3f point2 = Vec3f(0.05f, 0.0f, 10.0f);
-	Vec3f point3 = Vec3f(0.0f, -0.05f, 10.0f);
+	Vec3f point1 = Vec3f(-0.1f, 0.0f, 10.0f);
+	Vec3f point2 = Vec3f(0.1f, 0.0f, 10.0f);
+	Vec3f point3 = Vec3f(0.0f, -0.1f, 10.0f);
 
 	scene->add(Sphere(Vec3f(-4.0f, 0.0f, -100.0f), 80.0f, Vec3f(0.0f, 0.0f, 1.0f), 0, 1));
 
-	scene->add(Sphere(Vec3f(-4.0f, 0.0f, -10.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f), 1, 0));
+	scene->add(Sphere(Vec3f(4.0f, 0.0f, -10.0f), 3.0f, Vec3f(0.0f, 0.0f, 1.0f), 1, 0));
 	scene->add(Sphere(Vec3f(0.0f, 2.5f, -10.0f), 1.0f, Vec3f(1.0f, 1.0f, 0.0f), 0, 1));
-	scene->add(Sphere(Vec3f(4.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 0.0f, 1.0f), 1, 1));
-	scene->add(Sphere(Vec3f(0.0f, -2.5f, -10.0f), 1.0f, Vec3f(0.0f, 1.0f, 1.0f), 0, 0.5));
-	scene->add(LightSource(point1, point2,point3, Vec3f(0.5f, 0.5f, 0.5f)));
-	Image * image = new Image(1280, 960);
+	scene->add(Sphere(Vec3f(-4.0f, 0.0f, -10.0f), 3.0f, Vec3f(1.0f, 0.0f, 1.0f), 1, 1));
+	scene->add(Sphere(Vec3f(-3.0f, 1.0f, -5.0f), 0.8f, Vec3f(1.0f, 1.0f, 1.0f), 0, 1));
+	scene->add(Sphere(Vec3f(0.0f, -2.5f, -10.0f), 1.0f, Vec3f(0.0f, 1.0f, 1.0f), 0, 1));
+	scene->add(LightSource(createVecorsAroundPoint(Vec3f(0, 0, 100)), Vec3f(0.5f, 0.5f, 0.5f)));
+	Image * image = new Image(w, h);
 
 	rayTracer = new SimpleRayTracer(scene, image);
 
